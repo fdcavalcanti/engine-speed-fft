@@ -26,7 +26,9 @@ def find_fft_peak(fft_data, height_compare: float=1.5):
     print(len(idx[0]))
     if len(idx[0]) == 0:
         print("Peaks not found")
-    return idx
+        return None
+    else:
+        return idx[0]
 
 
 if __name__ == "__main__":
