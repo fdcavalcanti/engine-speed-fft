@@ -1,5 +1,7 @@
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from scipy.signal import find_peaks
 
 
@@ -31,16 +33,28 @@ def find_fft_peak(fft_data, height_compare: float=1.5):
         return idx[0]
 
 
+def read_accelerometer_data(file_path: str):
+    """ Read accelerometer data from a file.
+        Data must be on CSV format. Example:
+
+        datax,datay,dataz
+        0.001,0.002,0.003
+    """
+    x_data, y_data, z_data = [], [], []
+    with open(file_path, "r") as file:
+        file_data = csv.reader(file)
+        for idx, row in enumerate(file_data):
+            if len(row) != 3:
+                print(f"Bad parsing on line {idx}")
+                return 0
+            x_data.append(row[0])
+            y_data.append(row[1])
+            z_data.append(row[2])
+
+
 if __name__ == "__main__":
-    freq = 42
-    Fs = 100
-    samples = 1000
-    t = np.linspace(0, samples/Fs, samples)
-    signal = np.sin(2*np.pi*freq*t)
-
-    a, b = fft_axis(signal, filter=False)
-    peaks = find_fft_peak(a)[0]
-    plt.plot(b, a)
-    plt.plot(b[peaks], a[peaks], "*")
-
-    plt.show()
+    file_name = "sample_idle_data.csv"
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
+    print(data_dir)
+    read_accelerometer_data(data_dir)
