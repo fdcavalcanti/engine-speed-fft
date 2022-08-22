@@ -6,6 +6,7 @@ import sys
 from scipy.signal import find_peaks
 from plot import plot_peak_fft, plot_time_data
 
+
 def fft_axis(acceleration_data: np.ndarray, sample_freq: int=100, filter: bool=False) -> np.ndarray:
     """ Remove the mean and calculate the FFT of acceleration_data.
         Return both the FFT and frequency axis data for plotting.
@@ -32,7 +33,7 @@ def find_fft_peak(fft_data, height_compare: float=1.5):
     return idx[0]
 
 
-def read_accelerometer_data(file_path: str, num_axis: int=3):
+def read_accelerometer_data(file_path: str):
     """ Read accelerometer data from a file.
         Data must be on CSV format. Example:
 
@@ -40,13 +41,15 @@ def read_accelerometer_data(file_path: str, num_axis: int=3):
         0.001,0.002,0.003
     """
     x_data, y_data, z_data = [], [], []
-    if num_axis not in (1,2,3):
-        print("Number of axis not suported")
-        return 0
-    print(f"Importing data for {num_axis} axis")
-    with open(file_path, "r") as file:
+    num_axis = 0
+    print("Importing data")
+    with open(file_path, "r", encoding="utf-8") as file:
         file_data = csv.reader(file)
-        for row in file_data:
+        for idx, row in enumerate(file_data):
+            if idx == 0:
+                columns = len(row)  # Estimate columns available
+                num_axis = columns
+                print(f"Found {columns} columns")
             x_data.append(row[0])
             if num_axis > 1:
                 y_data.append(row[1])
@@ -69,7 +72,7 @@ def main(datalog_path):
     """ Executes the script to estimate engine speed from acceleration data."""
     current_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(os.path.dirname(current_dir), "data", datalog_path)
-    x_data, _, _ = read_accelerometer_data(data_dir, 2)
+    x_data, y_data, z_data = read_accelerometer_data(data_dir)
     fft_data_x, fft_freq = fft_axis(x_data, filter=True)
     peaks = find_fft_peak(fft_data_x, height_compare=4)
     frequency_peaks = fft_freq[peaks]
