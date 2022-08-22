@@ -1,9 +1,8 @@
 import csv
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 from scipy.signal import find_peaks
-
+from plot import plot_peak_fft
 
 def fft_axis(acceleration_data: np.ndarray, sample_freq: int=100, filter: bool=False) -> np.ndarray:
     """ Remove the mean and calculate the FFT of acceleration_data.
@@ -11,7 +10,7 @@ def fft_axis(acceleration_data: np.ndarray, sample_freq: int=100, filter: bool=F
     """
     data_length = len(acceleration_data)
     if filter:
-        print("Filtering")
+        print("Removing mean from acceleration data")
         acceleration_data = acceleration_data - np.mean(acceleration_data)
     fft_data = np.fft.rfft(acceleration_data)/data_length
     fft_data = 2*np.abs(fft_data)
@@ -25,15 +24,13 @@ def find_fft_peak(fft_data, height_compare: float=1.5):
         peaks of 1.5x the mean amplitude.
     """
     idx = find_peaks(fft_data, height=height_compare*np.mean(fft_data))
-    print(len(idx[0]))
     if len(idx[0]) == 0:
         print("Peaks not found")
         return None
-    else:
-        return idx[0]
+    return idx[0]
 
 
-def read_accelerometer_data(file_path: str):
+def read_accelerometer_data(file_path: str, num_axis: int=3):
     """ Read accelerometer data from a file.
         Data must be on CSV format. Example:
 
@@ -41,15 +38,18 @@ def read_accelerometer_data(file_path: str):
         0.001,0.002,0.003
     """
     x_data, y_data, z_data = [], [], []
+    if num_axis not in (1,2,3):
+        print("Number of axis not suported")
+        return 0
+    print(f"Importing data for {num_axis} axis")
     with open(file_path, "r") as file:
         file_data = csv.reader(file)
-        for idx, row in enumerate(file_data):
-            if len(row) != 3:
-                print(f"Bad parsing on line {idx}")
-                return 0
+        for row in file_data:
             x_data.append(row[0])
-            y_data.append(row[1])
-            z_data.append(row[2])
+            if num_axis > 1:
+                y_data.append(row[1])
+                if num_axis > 2:
+                    z_data.append(row[2])
 
     x_data = np.asarray(x_data, dtype=np.float32)
     y_data = np.asarray(y_data, dtype=np.float32)
@@ -66,20 +66,15 @@ def estimate_engine_speed(frequency: np.ndarray, cylinders: int=4) -> float:
 def run(file_name):    
     current_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
-    x_data, _, _ = read_accelerometer_data(data_dir)
+    x_data, _, _ = read_accelerometer_data(data_dir, 2)
     fft_data_x, fft_freq = fft_axis(x_data, filter=True)
     peaks = find_fft_peak(fft_data_x, height_compare=4)
     frequency_peaks = fft_freq[peaks]
     for peak in frequency_peaks:
         espeed = estimate_engine_speed(peak)
-        print(f"Engine speed estimated: {espeed}")
-    print(peaks)
-
-    plt.plot(fft_freq, fft_data_x)
-    plt.show()
-
+        print(f"Engine speed estimated: {np.round(espeed, 2)} RPM")
+    plot_peak_fft(fft_data_x, fft_freq, peaks)
 
 if __name__ == "__main__":
     file_name = "sample_idle_data.csv"
     run(file_name)
-
