@@ -1,6 +1,8 @@
+import argparse
 import csv
 import numpy as np
 import os
+import sys
 from scipy.signal import find_peaks
 from plot import plot_peak_fft, plot_time_data
 
@@ -63,9 +65,10 @@ def estimate_engine_speed(frequency: np.ndarray, cylinders: int=4) -> float:
     return engine_speed
 
 
-def run(file_name):
+def main(datalog_path):
+    """ Executes the script to estimate engine speed from acceleration data."""
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
+    data_dir = os.path.join(os.path.dirname(current_dir), "data", datalog_path)
     x_data, _, _ = read_accelerometer_data(data_dir, 2)
     fft_data_x, fft_freq = fft_axis(x_data, filter=True)
     peaks = find_fft_peak(fft_data_x, height_compare=4)
@@ -76,7 +79,19 @@ def run(file_name):
     plot_peak_fft(fft_data_x, fft_freq, peaks)
     plot_time_data(x_data)
 
-
 if __name__ == "__main__":
-    file_name = "sample_idle_data.csv"
-    run(file_name)
+    parser = argparse.ArgumentParser(description="Estimate engine speed using data from\
+                                                  accelerometer")
+    parser.add_argument("--filepath", default=None,
+                        help="Absolute path for datalog to be used (default: example file)")
+    args = parser.parse_args()
+    if args.filepath is not None:
+        log_file = args.filepath
+    else:
+        log_file = "sample_idle_data.csv"
+
+    print(f"File: {log_file}")
+    if not os.path.exists(log_file):
+        print("File not found")
+        sys.exit(0)
+    main(log_file)
