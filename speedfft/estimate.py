@@ -70,9 +70,7 @@ def estimate_engine_speed(frequency: np.ndarray, cylinders: int=4) -> float:
 
 def main(datalog_path):
     """ Executes the script to estimate engine speed from acceleration data."""
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(os.path.dirname(current_dir), "data", datalog_path)
-    x_data, y_data, z_data = read_accelerometer_data(data_dir)
+    x_data, y_data, z_data = read_accelerometer_data(datalog_path)
     fft_data_x, fft_freq = fft_axis(x_data, filter=True)
     peaks = find_fft_peak(fft_data_x, height_compare=4)
     frequency_peaks = fft_freq[peaks]
@@ -91,7 +89,8 @@ if __name__ == "__main__":
     if args.filepath is not None:
         log_file = args.filepath
     else:
-        log_file = "sample_idle_data.csv"
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        log_file = os.path.join(os.path.dirname(current_dir), "data", "sample_idle_data.csv")
 
     print(f"File: {log_file}")
     if not os.path.exists(log_file):
