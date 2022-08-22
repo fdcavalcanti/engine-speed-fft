@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import os
 from scipy.signal import find_peaks
-from plot import plot_peak_fft
+from plot import plot_peak_fft, plot_time_data
 
 def fft_axis(acceleration_data: np.ndarray, sample_freq: int=100, filter: bool=False) -> np.ndarray:
     """ Remove the mean and calculate the FFT of acceleration_data.
@@ -63,7 +63,7 @@ def estimate_engine_speed(frequency: np.ndarray, cylinders: int=4) -> float:
     return engine_speed
 
 
-def run(file_name):    
+def run(file_name):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
     x_data, _, _ = read_accelerometer_data(data_dir, 2)
@@ -74,6 +74,8 @@ def run(file_name):
         espeed = estimate_engine_speed(peak)
         print(f"Engine speed estimated: {np.round(espeed, 2)} RPM")
     plot_peak_fft(fft_data_x, fft_freq, peaks)
+    plot_time_data(x_data)
+
 
 if __name__ == "__main__":
     file_name = "sample_idle_data.csv"
