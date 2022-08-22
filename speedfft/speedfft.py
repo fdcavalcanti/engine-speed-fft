@@ -51,10 +51,35 @@ def read_accelerometer_data(file_path: str):
             y_data.append(row[1])
             z_data.append(row[2])
 
+    x_data = np.asarray(x_data, dtype=np.float32)
+    y_data = np.asarray(y_data, dtype=np.float32)
+    z_data = np.asarray(z_data, dtype=np.float32)
+    return x_data, y_data, z_data
+
+
+def estimate_engine_speed(frequency: np.ndarray, cylinders: int=4) -> float:
+    """ Estime engine speed based on peak frequency and cylinders."""
+    engine_speed = 60*frequency/2
+    return engine_speed
+
+
+def run(file_name):    
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
+    x_data, _, _ = read_accelerometer_data(data_dir)
+    fft_data_x, fft_freq = fft_axis(x_data, filter=True)
+    peaks = find_fft_peak(fft_data_x, height_compare=4)
+    frequency_peaks = fft_freq[peaks]
+    for peak in frequency_peaks:
+        espeed = estimate_engine_speed(peak)
+        print(f"Engine speed estimated: {espeed}")
+    print(peaks)
+
+    plt.plot(fft_freq, fft_data_x)
+    plt.show()
+
 
 if __name__ == "__main__":
     file_name = "sample_idle_data.csv"
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(os.path.dirname(current_dir), "data", file_name)
-    print(data_dir)
-    read_accelerometer_data(data_dir)
+    run(file_name)
+
